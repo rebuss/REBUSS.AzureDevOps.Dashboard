@@ -185,7 +185,8 @@ export class PrTrackerView extends BaseView {
 
       switch (this._currentFilter) {
         case FILTER.NEEDS_REVIEW:
-          return approval.isReviewer && approval.needsMyReview && !isDone;
+          // Exclude PRs created by the current user – those belong in "My PR" only
+          return approval.isReviewer && approval.needsMyReview && !isDone && !pr._isMyPr;
         case FILTER.APPROVED:
           return approval.isReviewer && approval.hasApproved && !isDone;
         // Filtr "My PR": autor = aktualny użytkownik ORAZ (status active LUB isDraft)
