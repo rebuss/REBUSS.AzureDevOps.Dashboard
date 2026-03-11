@@ -1,0 +1,27 @@
+{
+  "name": "rebuss.azuredevops.dashboard",
+  "version": "1.0.0",
+  "description": "",
+  "main": "background.js",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.3",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "globals": "^17.4.0",
+    "prettier": "^3.8.1",
+    "vitest": "^4.0.18"
+  }
+}

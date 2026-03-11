@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>REBUSS PR Tracker</title>
+  <link rel="stylesheet" href="panel.css" />
+  <link rel="stylesheet" href="../features/pr-tracker/pr-tracker.css" />
+</head>
+<body>
+  <!-- ── Header bar ── -->
+  <header id="header">
+    <h1 id="header-title">REBUSS</h1>
+    <div class="header-actions">
+      <button id="btn-refresh" title="Refresh">&#x21bb; Refresh</button>
+      <button id="btn-settings" title="Open settings">&#x2699;</button>
+    </div>
+  </header>
+
+  <!-- ── Tab bar (rendered by TabRouter) ── -->
+  <nav id="tab-bar"></nav>
+
+  <!-- ── Tab content (views mount here) ── -->
+  <main id="tab-content"></main>
+
+  <script type="module" src="panel.js"></script>
+</body>
+</html>

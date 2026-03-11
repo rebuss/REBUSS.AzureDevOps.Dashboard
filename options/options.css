@@ -1,0 +1,154 @@
+/* ── Base ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #1e1e1e;
+  --card-bg: #2a2a2a;
+  --text: #ccc;
+  --text-muted: #888;
+  --accent: #4fc3f7;
+  --green: #66bb6a;
+  --red: #ef5350;
+  --border: #444;
+  --radius: 6px;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.container {
+  width: 100%;
+  max-width: 520px;
+}
+
+h1 {
+  font-size: 20px;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.subtitle {
+  color: var(--text-muted);
+  margin-bottom: 24px;
+  font-size: 13px;
+}
+
+/* ── Form ── */
+label {
+  display: block;
+  margin-top: 16px;
+  margin-bottom: 4px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.required { color: var(--red); }
+.optional  { color: var(--text-muted); font-weight: 400; }
+
+input[type="text"],
+input[type="password"],
+input[type="number"] {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 13px;
+}
+input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+small {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+small a { color: var(--accent); }
+
+/* PAT row */
+.pat-row {
+  display: flex;
+  gap: 6px;
+}
+.pat-row input { flex: 1; }
+.pat-row button {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  cursor: pointer;
+  padding: 0 10px;
+  font-size: 16px;
+}
+
+/* Fieldset */
+fieldset {
+  margin-top: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+legend {
+  font-weight: 600;
+  font-size: 13px;
+  padding: 0 6px;
+}
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+  margin-bottom: 8px;
+}
+fieldset input[type="number"] {
+  width: 80px;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+.actions button {
+  padding: 8px 20px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+#btn-save {
+  background: var(--accent);
+  color: #111;
+}
+#btn-test {
+  background: var(--card-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.actions button:hover { opacity: 0.85; }
+
+/* Message */
+#message {
+  margin-top: 16px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  font-size: 13px;
+}
+#message.success { background: #1a3e1a; color: var(--green); }
+#message.error   { background: #3e1a1a; color: var(--red); }
+.hidden { display: none !important; }

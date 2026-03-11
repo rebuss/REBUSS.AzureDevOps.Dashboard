@@ -1,0 +1,144 @@
+/* ── Reset & base ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #1e1e1e;
+  --bg-card: #2d2d2d;
+  --bg-card-hover: #353535;
+  --text: #ccc;
+  --text-muted: #888;
+  --accent: #4fc3f7;
+  --green: #66bb6a;
+  --orange: #ffa726;
+  --red: #ef5350;
+  --border: #444;
+  --header-bg: #181818;
+  --radius: 6px;
+}
+
+html, body {
+  height: 100%;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Header ── */
+#header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+#header h1 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.header-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.header-actions button {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.header-actions button:hover {
+  background: var(--bg-card);
+}
+
+/* ── Tab bar ── */
+#tab-bar {
+  display: flex;
+  gap: 4px;
+  padding: 6px 12px;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+#tab-bar:empty { display: none; }
+
+.tab-btn {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ── Status bar (shared) ── */
+.status-bar {
+  padding: 8px 12px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.status-bar.error   { background: #3e1a1a; color: var(--red); }
+.status-bar.info    { background: #1a2e3e; color: var(--accent); }
+.status-bar.success { background: #1a3e1a; color: var(--green); }
+
+.hidden { display: none !important; }
+
+/* ── Tab content area ── */
+#tab-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.view-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Spinner (shared) ── */
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #666; }
