@@ -114,6 +114,7 @@
 .badge-needs      { background: var(--orange); color: #111; }
 .badge-rejected   { background: var(--red);    color: #fff; }
 .badge-waiting    { background: #6d4c41;       color: #fff; }
+.badge-draft      { background: #6d4c41;       color: #fff; }
 .badge-no-vote    { background: #555;          color: #ccc; }
 .badge-not-reviewer { background: #444;        color: #999; }
 

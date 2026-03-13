@@ -27,7 +27,7 @@ export const VOTE = Object.freeze({
  * @param {string} myUserId   – GUID of the current user
  * @param {string} teamId     – GUID of the team (optional)
  * @param {boolean} treatTeamVoteAsApproval – when true, team vote counts as personal approval
- * @returns {{ isReviewer:boolean, hasApproved:boolean, needsMyReview:boolean, vote:number, isWaitingForAuthor:boolean, isMuted:boolean }}
+ * @returns {{ isReviewer:boolean, hasApproved:boolean, needsMyReview:boolean, vote:number, isWaitingForAuthor:boolean, isDraft:boolean, isMuted:boolean }}
  */
 export function classifyApproval(pr, myUserId, teamId = null, treatTeamVoteAsApproval = false) {
   const lowerMyId = myUserId.toLowerCase();
@@ -63,6 +63,7 @@ export function classifyApproval(pr, myUserId, teamId = null, treatTeamVoteAsApp
       needsMyReview: false,
       vote: 0,
       isWaitingForAuthor: false,
+      isDraft: !!pr.isDraft,
       isMuted: false,
     };
   }
@@ -82,11 +83,18 @@ export function classifyApproval(pr, myUserId, teamId = null, treatTeamVoteAsApp
 
   const hasApproved = vote >= VOTE.APPROVED_WITH_SUGGESTIONS;
   const isWaitingForAuthor = vote === VOTE.WAITING_FOR_AUTHOR;
-  const needsMyReview = vote < VOTE.APPROVED_WITH_SUGGESTIONS;
+  const isDraft = !!pr.isDraft;
 
-  // If waiting for author AND no new changes, mark as muted (grayed out)
+  // Draft PRs are not actionable – treat them like "waiting for author".
+  // The author is still working on the PR, so no review is needed yet.
+  const needsMyReview = isDraft ? false : vote < VOTE.APPROVED_WITH_SUGGESTIONS;
+
+  // Mute non-actionable PRs: drafts are always muted;
+  // waiting-for-author PRs are muted only when there are no new changes.
   let isMuted = false;
-  if (isWaitingForAuthor) {
+  if (isDraft) {
+    isMuted = true;
+  } else if (isWaitingForAuthor) {
     const hasNewChanges = checkForNewChanges(pr, reviewer);
     isMuted = !hasNewChanges;
   }
@@ -97,6 +105,7 @@ export function classifyApproval(pr, myUserId, teamId = null, treatTeamVoteAsApp
     needsMyReview,
     vote,
     isWaitingForAuthor,
+    isDraft,
     isMuted,
   };
 

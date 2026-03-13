@@ -124,11 +124,17 @@ export class PrTrackerView extends BaseView {
       `/_git/${encodeURIComponent(pr.repository.name)}/pullrequest/${pr.pullRequestId}`;
 
     let badgeHtml;
-    if (pr._approval.isReviewer) {
+    if (pr._approval.isDraft) {
+      // Draft PRs are non-actionable – show a dedicated badge similar to "Waiting for author"
+      badgeHtml = `<span class="badge badge-draft">Draft</span>`;
+    } else if (pr._approval.isReviewer) {
       if (pr._approval.hasApproved) {
         badgeHtml = `<span class="badge badge-approved">${voteLabel(pr._approval.vote)}</span>`;
       } else if (pr._approval.vote === VOTE.NO_VOTE) {
-        badgeHtml = `<span class="badge badge-needs">Needs my review</span>`;
+        // Don't show the action-oriented "Needs my review" label on my own PRs
+        badgeHtml = pr._isMyPr
+          ? `<span class="badge badge-no-vote">${voteLabel(pr._approval.vote)}</span>`
+          : `<span class="badge badge-needs">Needs my review</span>`;
       } else if (pr._approval.vote === VOTE.WAITING_FOR_AUTHOR) {
         const mutedIndicator = pr._approval.isMuted ? ' (no new changes)' : '';
         badgeHtml = `<span class="badge badge-waiting">${voteLabel(pr._approval.vote)}${mutedIndicator}</span>`;
@@ -185,8 +191,9 @@ export class PrTrackerView extends BaseView {
 
       switch (this._currentFilter) {
         case FILTER.NEEDS_REVIEW:
-          // Exclude PRs created by the current user – those belong in "My PR" only
-          return approval.isReviewer && approval.needsMyReview && !isDone && !pr._isMyPr;
+          // needsMyReview is already false for my own PRs (set in _loadData),
+          // so no extra _isMyPr check is needed here.
+          return approval.isReviewer && approval.needsMyReview && !isDone;
         case FILTER.APPROVED:
           return approval.isReviewer && approval.hasApproved && !isDone;
         // Filtr "My PR": autor = aktualny użytkownik ORAZ (status active LUB isDraft)
@@ -376,12 +383,23 @@ export class PrTrackerView extends BaseView {
       const myPrIds = new Set(myPrs.map((pr) => pr.pullRequestId));
 
       this._donePrIds = await loadDonePrIds();
-      this._prData = mergedPrs.map((pr) => ({
-        ...pr,
-        _org: config.organization,
-        _approval: classifyApproval(pr, this._myUserId, teamId, config.treatTeamVoteAsApproval),
-        _isMyPr: myPrIds.has(pr.pullRequestId),
-      }));
+      this._prData = mergedPrs.map((pr) => {
+        const isMyPr = myPrIds.has(pr.pullRequestId);
+        const approval = classifyApproval(pr, this._myUserId, teamId, config.treatTeamVoteAsApproval);
+
+        // PRs I created should never be flagged as "needs my review" –
+        // even if I'm also listed as a reviewer (e.g. via team membership).
+        if (isMyPr) {
+          approval.needsMyReview = false;
+        }
+
+        return {
+          ...pr,
+          _org: config.organization,
+          _approval: approval,
+          _isMyPr: isMyPr,
+        };
+      });
 
       hide(this._loadingEl);
 

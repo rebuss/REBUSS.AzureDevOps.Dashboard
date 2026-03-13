@@ -3,7 +3,8 @@ import { FILTER } from '../core/constants.js';
 
 /**
  * Extracted filter predicate matching _renderList() in pr-tracker.view.js.
- * This keeps the test in sync with the view logic.
+ * Note: needsMyReview is already set to false for own PRs by _loadData(),
+ * so the filter itself does not need an explicit _isMyPr check.
  */
 function filterPr(pr, currentFilter, donePrIds) {
   const isDone = donePrIds.has(pr.pullRequestId);
@@ -11,8 +12,7 @@ function filterPr(pr, currentFilter, donePrIds) {
 
   switch (currentFilter) {
     case FILTER.NEEDS_REVIEW:
-      // Exclude PRs created by the current user – those belong in "My PR" only
-      return approval.isReviewer && approval.needsMyReview && !isDone && !pr._isMyPr;
+      return approval.isReviewer && approval.needsMyReview && !isDone;
     case FILTER.APPROVED:
       return approval.isReviewer && approval.hasApproved && !isDone;
     case FILTER.MY_PR:
@@ -44,8 +44,10 @@ describe('PR filter: NEEDS_REVIEW', () => {
     expect(filterPr(pr, FILTER.NEEDS_REVIEW, NO_DONE)).toBe(true);
   });
 
-  it('excludes PRs created by the current user even if they need review', () => {
-    const pr = makePr({ isReviewer: true, needsMyReview: true, isMyPr: true });
+  it('excludes own PRs because needsMyReview is already false (set by view layer)', () => {
+    // When _isMyPr is true, the view layer sets needsMyReview to false
+    // before the filter runs, so the filter naturally excludes them.
+    const pr = makePr({ isReviewer: true, needsMyReview: false, isMyPr: true });
     expect(filterPr(pr, FILTER.NEEDS_REVIEW, NO_DONE)).toBe(false);
   });
 
@@ -56,6 +58,13 @@ describe('PR filter: NEEDS_REVIEW', () => {
 
   it('excludes PRs where user is not a reviewer', () => {
     const pr = makePr({ isReviewer: false, needsMyReview: false });
+    expect(filterPr(pr, FILTER.NEEDS_REVIEW, NO_DONE)).toBe(false);
+  });
+
+  it('excludes draft PRs because needsMyReview is false (set by classifier)', () => {
+    // Draft PRs get needsMyReview=false from classifyApproval,
+    // so they are naturally excluded from the NEEDS_REVIEW filter.
+    const pr = makePr({ isReviewer: true, needsMyReview: false, isMyPr: false });
     expect(filterPr(pr, FILTER.NEEDS_REVIEW, NO_DONE)).toBe(false);
   });
 

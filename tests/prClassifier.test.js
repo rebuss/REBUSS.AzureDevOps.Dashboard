@@ -130,6 +130,47 @@ describe('classifyApproval', () => {
       expect(result.vote).toBe(0);
     });
   });
+
+  describe('draft PRs', () => {
+    it('sets isDraft=true for draft PRs', () => {
+      const pr = makePr([reviewer(MY_ID, VOTE.NO_VOTE)], { isDraft: true });
+      const result = classifyApproval(pr, MY_ID);
+      expect(result.isDraft).toBe(true);
+    });
+
+    it('sets isDraft=false for non-draft PRs', () => {
+      const pr = makePr([reviewer(MY_ID, VOTE.NO_VOTE)]);
+      const result = classifyApproval(pr, MY_ID);
+      expect(result.isDraft).toBe(false);
+    });
+
+    it('sets needsMyReview=false for draft PRs even with no vote', () => {
+      const pr = makePr([reviewer(MY_ID, VOTE.NO_VOTE)], { isDraft: true });
+      const result = classifyApproval(pr, MY_ID);
+      expect(result.needsMyReview).toBe(false);
+    });
+
+    it('sets isMuted=true for draft PRs', () => {
+      const pr = makePr([reviewer(MY_ID, VOTE.NO_VOTE)], { isDraft: true });
+      const result = classifyApproval(pr, MY_ID);
+      expect(result.isMuted).toBe(true);
+    });
+
+    it('preserves vote value for draft PRs', () => {
+      const pr = makePr([reviewer(MY_ID, VOTE.APPROVED)], { isDraft: true });
+      const result = classifyApproval(pr, MY_ID);
+      expect(result.vote).toBe(VOTE.APPROVED);
+      expect(result.isDraft).toBe(true);
+      expect(result.isMuted).toBe(true);
+    });
+
+    it('reports isDraft even when not a reviewer', () => {
+      const pr = makePr([reviewer('other-user', 10)], { isDraft: true });
+      const result = classifyApproval(pr, MY_ID);
+      expect(result.isReviewer).toBe(false);
+      expect(result.isDraft).toBe(true);
+    });
+  });
 });
 
 /* ── voteLabel ── */
