@@ -27,9 +27,10 @@ export const VOTE = Object.freeze({
  * @param {string} myUserId   – GUID of the current user
  * @param {string} teamId     – GUID of the team (optional)
  * @param {boolean} treatTeamVoteAsApproval – when true, team vote counts as personal approval
+ * @param {boolean} hasNewPushSinceVote – true if author pushed after the last WFA vote (computed externally)
  * @returns {{ isReviewer:boolean, hasApproved:boolean, needsMyReview:boolean, vote:number, isWaitingForAuthor:boolean, isDraft:boolean, isMuted:boolean }}
  */
-export function classifyApproval(pr, myUserId, teamId = null, treatTeamVoteAsApproval = false) {
+export function classifyApproval(pr, myUserId, teamId = null, treatTeamVoteAsApproval = false, hasNewPushSinceVote = false) {
   const lowerMyId = myUserId.toLowerCase();
   const lowerTeamId = teamId?.toLowerCase();
 
@@ -95,8 +96,7 @@ export function classifyApproval(pr, myUserId, teamId = null, treatTeamVoteAsApp
   if (isDraft) {
     isMuted = true;
   } else if (isWaitingForAuthor) {
-    const hasNewChanges = checkForNewChanges(pr, reviewer);
-    isMuted = !hasNewChanges;
+    isMuted = !hasNewPushSinceVote;
   }
 
   const result = {
@@ -111,36 +111,6 @@ export function classifyApproval(pr, myUserId, teamId = null, treatTeamVoteAsApp
 
   logger.debug(`PR ${pr.pullRequestId} classified:`, result);
   return result;
-}
-
-/**
- * Check if PR has new changes since the reviewer's vote.
- *
- * HEURISTIC APPROACH:
- * - If reviewer has votedFor array with dates, compare against PR's last update
- * - Otherwise, if PR was updated in last 48h, assume new changes
- * - If none of above, assume NO new changes (safer to show as muted)
- *
- * @param {object} pr - PR object from API
- * @param {object} reviewer - Reviewer object
- * @returns {boolean} true if there are new changes since vote
- */
-function checkForNewChanges(pr, reviewer) {
-  if (reviewer.votedFor && reviewer.votedFor.length > 0) {
-    const latestVote = reviewer.votedFor[reviewer.votedFor.length - 1];
-    if (latestVote.reviewerUrl) {
-      // Complex comparison would need full API data – fall through to heuristic
-    }
-  }
-
-  try {
-    const prCreationDate = new Date(pr.creationDate);
-    const now = new Date();
-    const hoursSinceCreation = (now - prCreationDate) / (1000 * 60 * 60);
-    return hoursSinceCreation < 48;
-  } catch {
-    return false;
-  }
 }
 
 /**

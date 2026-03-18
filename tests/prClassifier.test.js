@@ -171,6 +171,30 @@ describe('classifyApproval', () => {
       expect(result.isDraft).toBe(true);
     });
   });
+
+  describe('waiting-for-author muting with new push detection', () => {
+    it('mutes WFA PR when hasNewPushSinceVote=false', () => {
+      const pr = makePr([reviewer(MY_ID, VOTE.WAITING_FOR_AUTHOR)]);
+      const result = classifyApproval(pr, MY_ID, null, false, false);
+      expect(result.isWaitingForAuthor).toBe(true);
+      expect(result.isMuted).toBe(true);
+    });
+
+    it('unmutes WFA PR when hasNewPushSinceVote=true', () => {
+      const pr = makePr([reviewer(MY_ID, VOTE.WAITING_FOR_AUTHOR)]);
+      const result = classifyApproval(pr, MY_ID, null, false, true);
+      expect(result.isWaitingForAuthor).toBe(true);
+      expect(result.isMuted).toBe(false);
+      expect(result.needsMyReview).toBe(true);
+    });
+
+    it('mutes WFA PR by default when hasNewPushSinceVote not provided', () => {
+      const pr = makePr([reviewer(MY_ID, VOTE.WAITING_FOR_AUTHOR)]);
+      const result = classifyApproval(pr, MY_ID);
+      expect(result.isWaitingForAuthor).toBe(true);
+      expect(result.isMuted).toBe(true);
+    });
+  });
 });
 
 /* ── voteLabel ── */

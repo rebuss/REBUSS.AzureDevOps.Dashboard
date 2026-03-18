@@ -156,6 +156,75 @@ export async function fetchActivePullRequests(config) {
 }
 
 /**
+ * Fetch iteration details for a pull request.
+ * Each push to the source branch creates a new iteration.
+ *
+ * Endpoint:
+ *   GET https://dev.azure.com/{org}/{project}/_apis/git/repositories/{repoId}/pullRequests/{prId}/iterations
+ *
+ * @param {string} organization
+ * @param {string} project
+ * @param {string} repositoryId
+ * @param {number} pullRequestId
+ * @param {string} pat
+ * @returns {Promise<Array>}  Full iteration objects from API
+ */
+export async function fetchPrIterations(organization, project, repositoryId, pullRequestId, pat) {
+  const url =
+    `https://dev.azure.com/${encodeURIComponent(organization)}` +
+    `/${encodeURIComponent(project)}` +
+    `/_apis/git/repositories/${encodeURIComponent(repositoryId)}` +
+    `/pullRequests/${pullRequestId}/iterations` +
+    `?api-version=${API_VERSION}`;
+
+  const resp = await fetch(url, {
+    headers: { Authorization: authHeader(pat) },
+  });
+
+  if (!resp.ok) {
+    logger.warn(`Failed to fetch iterations for PR ${pullRequestId} (${resp.status})`);
+    return [];
+  }
+
+  const data = await resp.json();
+  return data.value || [];
+}
+
+/**
+ * Fetch threads (comments, votes, status updates) for a pull request.
+ *
+ * Endpoint:
+ *   GET https://dev.azure.com/{org}/{project}/_apis/git/repositories/{repoId}/pullRequests/{prId}/threads
+ *
+ * @param {string} organization
+ * @param {string} project
+ * @param {string} repositoryId
+ * @param {number} pullRequestId
+ * @param {string} pat
+ * @returns {Promise<Array>}  Thread objects from API
+ */
+export async function fetchPrThreads(organization, project, repositoryId, pullRequestId, pat) {
+  const url =
+    `https://dev.azure.com/${encodeURIComponent(organization)}` +
+    `/${encodeURIComponent(project)}` +
+    `/_apis/git/repositories/${encodeURIComponent(repositoryId)}` +
+    `/pullRequests/${pullRequestId}/threads` +
+    `?api-version=${API_VERSION}`;
+
+  const resp = await fetch(url, {
+    headers: { Authorization: authHeader(pat) },
+  });
+
+  if (!resp.ok) {
+    logger.warn(`Failed to fetch threads for PR ${pullRequestId} (${resp.status})`);
+    return [];
+  }
+
+  const data = await resp.json();
+  return data.value || [];
+}
+
+/**
  * Pobiera PR-y stworzone przez aktualnego użytkownika (active + draft).
  *
  * Endpoint:

@@ -12,7 +12,7 @@ import { FILTER } from '../../core/constants.js';
 
 import { loadConfig, isConfigComplete, loadDonePrIds, saveDonePrIds } from '../../services/configService.js';
 
-import { getMyIdentity, fetchActivePullRequests, fetchMyPullRequests } from '../../services/azureDevopsClient.js';
+import { getMyIdentity, fetchActivePullRequests, fetchMyPullRequests, fetchPrIterations, fetchPrThreads } from '../../services/azureDevopsClient.js';
 
 import { classifyApproval, voteLabel, VOTE } from '../../services/prClassifier.js';
 import { getWorkItemsForPr, clearWorkItemCache } from '../../services/workItemService.js';
@@ -383,12 +383,65 @@ export class PrTrackerView extends BaseView {
       const myPrIds = new Set(myPrs.map((pr) => pr.pullRequestId));
 
       this._donePrIds = await loadDonePrIds();
+
+      // First pass: quick-classify to identify WFA PRs that need extra API calls
+      const wfaPrIds = [];
+      for (const pr of mergedPrs) {
+        const isMyPr = myPrIds.has(pr.pullRequestId);
+        if (isMyPr) continue;
+        const quickApproval = classifyApproval(pr, this._myUserId, teamId, config.treatTeamVoteAsApproval);
+        if (quickApproval.isWaitingForAuthor) {
+          wfaPrIds.push(pr);
+        }
+      }
+
+      // For WFA PRs: fetch iterations + threads in parallel to detect new pushes since vote
+      const wfaNewPushMap = {};
+      if (wfaPrIds.length > 0) {
+        logger.debug(`Fetching iterations + threads for ${wfaPrIds.length} WFA PR(s)...`);
+        const results = await Promise.all(
+          wfaPrIds.map(async (pr) => {
+            const [iterations, threads] = await Promise.all([
+              fetchPrIterations(config.organization, config.project, pr.repository.id, pr.pullRequestId, config.pat),
+              fetchPrThreads(config.organization, config.project, pr.repository.id, pr.pullRequestId, config.pat),
+            ]);
+            return { pr, iterations, threads };
+          }),
+        );
+        for (const { pr, iterations, threads } of results) {
+          // Find the latest WFA vote (-5) by user or team from threads
+          const wfaVoteThreads = threads.filter((t) => {
+            const voteResult = t.properties?.CodeReviewVoteResult?.$value;
+            return voteResult === -5 || voteResult === '-5';
+          });
+          const latestWfaThread = wfaVoteThreads.length > 0
+            ? wfaVoteThreads.reduce((latest, t) =>
+                new Date(t.publishedDate) > new Date(latest.publishedDate) ? t : latest
+              )
+            : null;
+
+          // Find the latest iteration (last push)
+          const latestIteration = iterations.length > 0 ? iterations[iterations.length - 1] : null;
+
+          const voteDate = latestWfaThread ? new Date(latestWfaThread.publishedDate) : null;
+          const lastPushDate = latestIteration ? new Date(latestIteration.createdDate) : null;
+
+          const hasNewPush = !!(voteDate && lastPushDate && lastPushDate > voteDate);
+
+          logger.debug(
+            `PR ${pr.pullRequestId} WFA: lastVoteDate=${voteDate?.toISOString() ?? 'none'}, lastPushDate=${lastPushDate?.toISOString() ?? 'none'}, hasNewPush=${hasNewPush}`,
+          );
+
+          wfaNewPushMap[pr.pullRequestId] = hasNewPush;
+        }
+      }
+
+      // Second pass: full classification
       this._prData = mergedPrs.map((pr) => {
         const isMyPr = myPrIds.has(pr.pullRequestId);
-        const approval = classifyApproval(pr, this._myUserId, teamId, config.treatTeamVoteAsApproval);
+        const hasNewPush = wfaNewPushMap[pr.pullRequestId] ?? false;
+        const approval = classifyApproval(pr, this._myUserId, teamId, config.treatTeamVoteAsApproval, hasNewPush);
 
-        // PRs I created should never be flagged as "needs my review" –
-        // even if I'm also listed as a reviewer (e.g. via team membership).
         if (isMyPr) {
           approval.needsMyReview = false;
         }
